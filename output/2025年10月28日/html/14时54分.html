@@ -1,0 +1,821 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>热点新闻分析</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+        <style>
+            * { box-sizing: border-box; }
+            body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+                margin: 0; 
+                padding: 16px; 
+                background: #fafafa;
+                color: #333;
+                line-height: 1.5;
+            }
+            
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 2px 16px rgba(0,0,0,0.06);
+            }
+            
+            .header {
+                background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+                color: white;
+                padding: 32px 24px;
+                text-align: center;
+                position: relative;
+            }
+            
+            .save-buttons {
+                position: absolute;
+                top: 16px;
+                right: 16px;
+                display: flex;
+                gap: 8px;
+            }
+            
+            .save-btn {
+                background: rgba(255, 255, 255, 0.2);
+                border: 1px solid rgba(255, 255, 255, 0.3);
+                color: white;
+                padding: 8px 16px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                backdrop-filter: blur(10px);
+                white-space: nowrap;
+            }
+            
+            .save-btn:hover {
+                background: rgba(255, 255, 255, 0.3);
+                border-color: rgba(255, 255, 255, 0.5);
+                transform: translateY(-1px);
+            }
+            
+            .save-btn:active {
+                transform: translateY(0);
+            }
+            
+            .save-btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+            
+            .header-title {
+                font-size: 22px;
+                font-weight: 700;
+                margin: 0 0 20px 0;
+            }
+            
+            .header-info {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 16px;
+                font-size: 14px;
+                opacity: 0.95;
+            }
+            
+            .info-item {
+                text-align: center;
+            }
+            
+            .info-label {
+                display: block;
+                font-size: 12px;
+                opacity: 0.8;
+                margin-bottom: 4px;
+            }
+            
+            .info-value {
+                font-weight: 600;
+                font-size: 16px;
+            }
+            
+            .content {
+                padding: 24px;
+            }
+            
+            .word-group {
+                margin-bottom: 40px;
+            }
+            
+            .word-group:first-child {
+                margin-top: 0;
+            }
+            
+            .word-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 20px;
+                padding-bottom: 8px;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            
+            .word-info {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+            
+            .word-name {
+                font-size: 17px;
+                font-weight: 600;
+                color: #1a1a1a;
+            }
+            
+            .word-count {
+                color: #666;
+                font-size: 13px;
+                font-weight: 500;
+            }
+            
+            .word-count.hot { color: #dc2626; font-weight: 600; }
+            .word-count.warm { color: #ea580c; font-weight: 600; }
+            
+            .word-index {
+                color: #999;
+                font-size: 12px;
+            }
+            
+            .news-item {
+                margin-bottom: 20px;
+                padding: 16px 0;
+                border-bottom: 1px solid #f5f5f5;
+                position: relative;
+                display: flex;
+                gap: 12px;
+                align-items: center;
+            }
+            
+            .news-item:last-child {
+                border-bottom: none;
+            }
+            
+            .news-item.new::after {
+                content: "NEW";
+                position: absolute;
+                top: 12px;
+                right: 0;
+                background: #fbbf24;
+                color: #92400e;
+                font-size: 9px;
+                font-weight: 700;
+                padding: 3px 6px;
+                border-radius: 4px;
+                letter-spacing: 0.5px;
+            }
+            
+            .news-number {
+                color: #999;
+                font-size: 13px;
+                font-weight: 600;
+                min-width: 20px;
+                text-align: center;
+                flex-shrink: 0;
+                background: #f8f9fa;
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                align-self: flex-start;
+                margin-top: 8px;
+            }
+            
+            .news-content {
+                flex: 1;
+                min-width: 0;
+                padding-right: 40px;
+            }
+            
+            .news-item.new .news-content {
+                padding-right: 50px;
+            }
+            
+            .news-header {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 8px;
+                flex-wrap: wrap;
+            }
+            
+            .source-name {
+                color: #666;
+                font-size: 12px;
+                font-weight: 500;
+            }
+            
+            .rank-num {
+                color: #fff;
+                background: #6b7280;
+                font-size: 10px;
+                font-weight: 700;
+                padding: 2px 6px;
+                border-radius: 10px;
+                min-width: 18px;
+                text-align: center;
+            }
+            
+            .rank-num.top { background: #dc2626; }
+            .rank-num.high { background: #ea580c; }
+            
+            .time-info {
+                color: #999;
+                font-size: 11px;
+            }
+            
+            .count-info {
+                color: #059669;
+                font-size: 11px;
+                font-weight: 500;
+            }
+            
+            .news-title {
+                font-size: 15px;
+                line-height: 1.4;
+                color: #1a1a1a;
+                margin: 0;
+            }
+            
+            .news-link {
+                color: #2563eb;
+                text-decoration: none;
+            }
+            
+            .news-link:hover {
+                text-decoration: underline;
+            }
+            
+            .news-link:visited {
+                color: #7c3aed;
+            }
+            
+            .new-section {
+                margin-top: 40px;
+                padding-top: 24px;
+                border-top: 2px solid #f0f0f0;
+            }
+            
+            .new-section-title {
+                color: #1a1a1a;
+                font-size: 16px;
+                font-weight: 600;
+                margin: 0 0 20px 0;
+            }
+            
+            .new-source-group {
+                margin-bottom: 24px;
+            }
+            
+            .new-source-title {
+                color: #666;
+                font-size: 13px;
+                font-weight: 500;
+                margin: 0 0 12px 0;
+                padding-bottom: 6px;
+                border-bottom: 1px solid #f5f5f5;
+            }
+            
+            .new-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 8px 0;
+                border-bottom: 1px solid #f9f9f9;
+            }
+            
+            .new-item:last-child {
+                border-bottom: none;
+            }
+            
+            .new-item-number {
+                color: #999;
+                font-size: 12px;
+                font-weight: 600;
+                min-width: 18px;
+                text-align: center;
+                flex-shrink: 0;
+                background: #f8f9fa;
+                border-radius: 50%;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .new-item-rank {
+                color: #fff;
+                background: #6b7280;
+                font-size: 10px;
+                font-weight: 700;
+                padding: 3px 6px;
+                border-radius: 8px;
+                min-width: 20px;
+                text-align: center;
+                flex-shrink: 0;
+            }
+            
+            .new-item-rank.top { background: #dc2626; }
+            .new-item-rank.high { background: #ea580c; }
+            
+            .new-item-content {
+                flex: 1;
+                min-width: 0;
+            }
+            
+            .new-item-title {
+                font-size: 14px;
+                line-height: 1.4;
+                color: #1a1a1a;
+                margin: 0;
+            }
+            
+            .error-section {
+                background: #fef2f2;
+                border: 1px solid #fecaca;
+                border-radius: 8px;
+                padding: 16px;
+                margin-bottom: 24px;
+            }
+            
+            .error-title {
+                color: #dc2626;
+                font-size: 14px;
+                font-weight: 600;
+                margin: 0 0 8px 0;
+            }
+            
+            .error-list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .error-item {
+                color: #991b1b;
+                font-size: 13px;
+                padding: 2px 0;
+                font-family: 'SF Mono', Consolas, monospace;
+            }
+            
+            .footer {
+                margin-top: 32px;
+                padding: 20px 24px;
+                background: #f8f9fa;
+                border-top: 1px solid #e5e7eb;
+                text-align: center;
+            }
+            
+            .footer-content {
+                font-size: 13px;
+                color: #6b7280;
+                line-height: 1.6;
+            }
+            
+            .footer-link {
+                color: #4f46e5;
+                text-decoration: none;
+                font-weight: 500;
+                transition: color 0.2s ease;
+            }
+            
+            .footer-link:hover {
+                color: #7c3aed;
+                text-decoration: underline;
+            }
+            
+            .project-name {
+                font-weight: 600;
+                color: #374151;
+            }
+            
+            @media (max-width: 480px) {
+                body { padding: 12px; }
+                .header { padding: 24px 20px; }
+                .content { padding: 20px; }
+                .footer { padding: 16px 20px; }
+                .header-info { grid-template-columns: 1fr; gap: 12px; }
+                .news-header { gap: 6px; }
+                .news-content { padding-right: 45px; }
+                .news-item { gap: 8px; }
+                .new-item { gap: 8px; }
+                .news-number { width: 20px; height: 20px; font-size: 12px; }
+                .save-buttons {
+                    position: static;
+                    margin-bottom: 16px;
+                    display: flex;
+                    gap: 8px;
+                    justify-content: center;
+                    flex-direction: column;
+                    width: 100%;
+                }
+                .save-btn {
+                    width: 100%;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="save-buttons">
+                    <button class="save-btn" onclick="saveAsImage()">保存为图片</button>
+                    <button class="save-btn" onclick="saveAsMultipleImages()">分段保存</button>
+                </div>
+                <div class="header-title">热点新闻分析</div>
+                <div class="header-info">
+                    <div class="info-item">
+                        <span class="info-label">报告类型</span>
+                        <span class="info-value">实时分析</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">新闻总数</span>
+                        <span class="info-value">17 条</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">热点新闻</span>
+                        <span class="info-value">3 条</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">生成时间</span>
+                        <span class="info-value">10-28 14:54</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content">
+                <div class="word-group">
+                    <div class="word-header">
+                        <div class="word-info">
+                            <div class="word-name">auto vehicle car model passenger car passenger vehicle automotive carmaker automaker car manufacturer car manufacturing OEM automobile torque par (motor) wheel mobility highway transportation trim variant new energy all-electric new energy vehicle electric vehicle battery electric vehicle plug-in hybrid electric vehicle range-extended electric vehicle NEV EV BEV PHEV REEV Hydrogen fuel cell vehicle Hydrogen-powered vehicle Ethanol vehicle battery electric battery-powered range combined range CLTC battery Battery technology Solid-state battery Semi-solid-state battery Sodium-ion battery Lithium iron phosphate battery Hydrogen fuel cell Battery recycling Battery passport Charging infrastructure Ultra-fast charging network Battery swapping station V2G (vehicle-to-grid) Smart components Domain controller Onboard chip X-by-wire chassis Electrified components Electric drive system IGBT chip Thermal management system Lightweight materials Aluminum alloy Carbon fiber High-strength steel Lithium mine gigacasting die-casting chassis Autopilot autonomous driving autonomous car self-driving ADAS Advanced Driving Assistance System Advanced Driver Assistance System assisted driving system FSD (Full-Self Driving) Driving automation Robotaxi Lidar Multi-sensor fusion V2X (vehicle-to-infrastructure cooperation) High-precision map Decision algorithm augmented reality head-up display (AR-HUD) Intelligent connected vehicle Software-defined vehicle (SDV) chip AI chip robotic smart cars AI embodied intelligence edge AI EU carbon emission regulation U.S. Inflation Reduction Act European Green Deal Tariff New energy vehicle purchase subsidy Electric vehicle subsidy Autonomous driving cybersecurity Autonomous driving regulations Vertiport (vertical take-off and landing airport) Low-altitude intelligent network Air Traffic Management (ATM) Air taxi Airport shuttle / connection Low-altitude logistics Drone delivery Cross-border logistics 轿车 SUV MPV 跑车 越野车 卡车 巴士 货车 皮卡 微型车 豪华车 电动车 混合动力车 增程式电动车 氢燃料电池车 自动驾驶车 概念车 跨界车 轿跑车 旅行车 新车 二手车 发动机 变速箱 底盘 车身 轮胎 刹车系统 悬挂系统 转向系统 排气系统 燃油系统 电气系统 电池 域控制器 域控 车载电脑 传感器 摄像头 雷达 激光雷达 安全气囊 透明A柱 电子外后视镜 安全带 座椅 方向盘 仪表盘 信息娱乐系统 空调系统 热泵空调 灯光系统 轮毂 刹车片 火花塞 机油滤清器 空气滤清器 燃油泵 发电机 起动机 离合器 传动轴 差速器 减震器 电控减震器 弹簧 涡轮增压器 中冷器 水箱 风扇 皮带 点火线圈 蓄电池 保险丝 继电器 线束 车灯 雨刷器 后视镜 车窗 门锁 音响 导航模块 自动驾驶 舱驾融合 中央计算平台 软件定义汽车 车云一体化 端到端自动驾驶 滑板底盘 线控转向 线控制动 人工智能 具身智能 具身认知 具身交互 多模态融合 环境交互 具身决策 本体感知 多传感器标定 机器学习 车联网 V2X 电动汽车技术 电池技术 充电技术 氢燃料技术 混合动力技术 轻量化材料 碳纤维 3D打印 智能制造 数字孪生 机器人协同 自动驾驶软件 高精地图 定位技术 生物识别 语音识别 手势控制 增强现实抬头显示 无线充电 快速充电 电池管理系统 电机控制 能量回收系统 车用半导体 5G通信 边缘计算 云计算 大数据分析 网络安全 区块链 数字钥匙 远程升级 智能座舱 人机交互 传感器融合 计算机视觉 深度学习 自然语言处理 机器人技术 物联网 电动化平台 固态电池 超级充电 换电技术 燃料电池堆 上汽 一汽 东风 广汽 北汽 江淮 比亚迪 吉利 长城 长安 奇瑞 蔚来 小鹏 理想 哪吒 高合 威马 岚图 阿维塔 极氪 极狐 智己 问界 腾势 仰望 方程豹 小米 红旗 荣威 名爵 传祺 五菱 宝骏 欧拉 大众 奥迪 保时捷 奔驰 宝马 MINI 劳斯莱斯 Smart 特斯拉 福特 林肯 通用 雪佛兰 别克 凯迪拉克 Stellantis 克莱斯勒 Jeep 道奇 Rivian Lucid 丰田 雷克萨斯 本田 讴歌 日产 英菲尼迪 马自达 斯巴鲁 三菱 铃木 五十铃 现代 起亚 捷尼赛思 标致 雪铁龙 DS 雷诺 法拉利 玛莎拉蒂 兰博基尼 菲亚特 阿尔法·罗密欧 帕加尼 路虎 捷豹 宾利 阿斯顿·马丁 迈凯伦 路特斯 沃尔沃 Polestar 极星 塔塔 马恒达 斯柯达 宝腾 凯美瑞 卡罗拉 RAV4 汉兰达 普拉多 亚洲龙 赛那 威兰达 皇冠 塔科马 雅阁 思域 CR-V XR-V 飞度 奥德赛 艾力绅 皓影 冠道 UR-V 天籁 轩逸 奇骏 逍客 途乐 楼兰 GT-R 帕萨特 迈腾 途观 途昂 探岳 探歌 途锐 辉昂 CC Polo ID.3 ID.4 ID.6 3系 5系 7系 X1 X3 X5 X7 i3 i4 iX3 iX Z4 M3 M5 A级 C级 E级 S级 GLA GLC GLE GLS G级 EQC EQE EQS V级 A3 A4 A6 A8 Q2 Q3 Q5 Q7 Q8 e-tron RS6 RS7 R8 福克斯 蒙迪欧 Mustang 锐界 探险者 F-150 撼路者 科鲁泽 迈锐宝 探界者 开拓者 索罗德 科尔维特 凯雷德 XT4 XT5 XT6 CT4 CT5 CT6 Model S Model 3 Model X Model Y Cybertruck Roadster ES6 ES8 ET5 ET7 汉 唐 秦 元 海豚 海豹 理想L9 理想L8 理想L7 P7 P5 G9 001 009 极氪X 仰望U8 豹5 阿维塔11 深蓝SL03 问界M5 问界M7 问界M9 伊兰特 索纳塔 途胜 胜达 K5 K3 狮铂拓界 EV6 保时捷911 Cayenne Panamera 卡宴 路虎揽胜 卫士 发现 领克01 领克03 马自达3昂克赛拉 马自达6阿特兹 CX-5 CX-50 斯巴鲁森林人 傲虎 Crosstrek 汽车维修 汽车保养 汽车保险 汽车租赁 汽车金融 汽车贷款 汽车共享 网约车 汽车检测 汽车报废 二手车交易 汽车物流 汽车运输 加油站 充电站 换电站 氢燃料站 车辆年检 汽车配件销售 汽车软件更新 OTA 汽车数据服务 汽车订阅服务 车辆定制服务 汽车索赔 汽车牌照服务 电池租赁服务 汽车销售 汽车销量 市场份额 消费者需求 市场趋势 汽车价格 促销活动 汽车广告 品牌营销 数字营销 社交媒体营销 汽车评测 汽车媒体 汽车网站 汽车论坛 汽车展览 车展 汽车行业报告 经济影响 竞争分析 供应链管理 库存管理 经销商网络 区域市场 消费者偏好 市场细分 产品定位 价格战 折扣策略 市场调研 预测分析 进出口数据 二手车市场 新车发布 预售活动 线上销售 线下体验店 汽车电商平台 排放标准 环保法规 安全标准 车辆认证 燃油经济性标准 碳积分 补贴政策 税收政策 进口关税 贸易政策 自动驾驶法规 数据隐私法规 车辆召回 产品质量法 消费者保护法 交通法规 驾驶执照 车辆登记 保险法规 报废车辆法规 噪声法规 材料回收法规 碳排放交易 零排放车辆指令 汽车安全法 网络安全法 知识产权保护 反垄断法 劳工法规 国际贸易协定 地方政策 城市限行 拥堵收费 燃油税 电动汽车补贴 氢能源政策 基础设施投资 标准制定组织 认证机构 合规测试 双积分政策 自动驾驶事故责任认定 车辆数据采集合规 汽油 柴油 电动 纯电 混合动力 混动 插电式混合动力 插混 氢燃料 生物燃料 天然气 液化石油气 太阳能 风能 电池储能 燃料电池 能源效率 碳排放 碳中和 可再生能源 充电基础设施 氢燃料基础设施 能源管理 电网集成 智能充电 能源存储 能源政策 能源经济 能源安全 替代燃料 合成燃料 电动化转型 能源消耗 生命周期评估 碳足迹 绿色制造 回收利用 能源技术研发 能源合作 能源市场 能源价格 能源补贴 能源标准 碰撞测试 NCAP 安全评级 主动安全 被动安全 防抱死刹车系统 AEB 电子稳定控制 牵引力控制 盲点监测 车道保持辅助 自适应巡航控制 自动紧急制动 行人检测 交通标志识别 驾驶员监控 疲劳驾驶检测 安全气囊 安全带预紧器 儿童安全座椅 防盗系统 网络安全 数据安全 功能安全 事故分析 安全标准 车辆结构安全 材料安全 安全传感器 安全软件 安全认证 安全召回 道路安全 驾驶行为分析 安全法规合规 外观设计 内饰设计 空气动力学 造型设计 色彩设计 材料选择 人机工程学 用户体验 界面设计 灯光设计 轮毂设计 格栅设计 车身线条 概念设计 原型车 设计趋势 可持续设计 轻量化设计 模块化设计 数字化设计 虚拟设计 设计软件 设计专利 品牌设计语言 个性化设计 复古设计 未来主义设计 极简主义设计 豪华设计 运动设计 实用设计 安全设计 环保设计 智能设计 交互设计 材料纹理 一体化压铸 供应链韧性 生产线 装配线 机器人技术 自动化 供应链 零部件供应商 质量控制 精益生产 工厂管理 物流管理 库存控制 采购 制造工艺 焊接 涂装 冲压 铸造 注塑 3D打印 数字化工厂 工业物联网 预测维护 产能规划 环境管理 能源管理 安全生产 制造创新 本土化生产 全球化生产 制造标准 制造软件 制造设备 模具设计 组装技术 测试验证 制造效率 成本控制 车载信息娱乐系统 导航系统 数字钥匙 蓝牙连接 智能手机集成 车载Wi-Fi 语音助手 触摸屏 数字仪表盘 抬头显示 车载音响 放大器 扬声器 倒车摄像头 环视系统 行车记录仪 车载充电器 电池管理系统 电机控制器 传感器融合 多模态大模型 机械臂 仿生机构 电子控制单元 车载网络 车载操作系统 应用程序接口 远程控制 车辆诊断 电子钥匙 生物识别访问 车载支付 娱乐内容 社交媒体集成 实时交通信息 天气预报 语音搜索 手势识别 眼动追踪 情绪检测 健康监测 电子稳定程序 防撞系统 自动泊车系统 座套 脚垫 方向盘套 手机支架 车载充电器 行车记录仪 GPS导航 车载冰箱 性能升级 排气系统改装 悬挂改装 轮毂改装 保险杠 音响系统升级 座椅加热器 方向盘加热 胎压监测系统 儿童娱乐系统 行李箱 挡泥板 雨挡 天线 喇叭 火花塞升级 进气系统 涡轮增压套件</div>
+                            <div class="word-count ">3 条</div>
+                        </div>
+                        <div class="word-index">1/1</div>
+                    </div>
+                    <div class="news-item new">
+                        <div class="news-number">1</div>
+                        <div class="news-content">
+                            <div class="news-header">
+                                <span class="source-name">今日头条</span><span class="rank-num high">17</span><span class="time-info">14时54分</span>
+                            </div>
+                            <div class="news-title"><a href="https://www.toutiao.com/trending/7565821177754484762/" target="_blank" class="news-link">唐国强到访武侯祠把AI当成旅游搭子</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="news-item new">
+                        <div class="news-number">2</div>
+                        <div class="news-content">
+                            <div class="news-header">
+                                <span class="source-name">微博</span><span class="rank-num high">20</span><span class="time-info">14时54分</span>
+                            </div>
+                            <div class="news-title"><a href="https://m.weibo.cn/search?containerid=100103type%3D1%26t%3D10%26q%3D%23%E4%BF%9D%E6%97%B6%E6%8D%B7%E5%9B%9E%E5%BA%94%E5%A4%9A%E6%AC%BE%E6%B2%B9%E8%BD%A6%E5%B0%86%E5%81%9C%E4%BA%A7%23&amp;stream_entry_id=31&amp;isnewpage=1&amp;extparam=seat%3D1%26filter_type%3Drealtimehot%26c_type%3D31%26realpos%3D20%26lcate%3D5001%26cate%3D5001%26dgr%3D0%26flag%3D1%26q%3D%2523%25E4%25BF%259D%25E6%2597%25B6%25E6%258D%25B7%25E5%259B%259E%25E5%25BA%2594%25E5%25A4%259A%25E6%25AC%25BE%25E6%25B2%25B9%25E8%25BD%25A6%25E5%25B0%2586%25E5%2581%259C%25E4%25BA%25A7%2523%26stream_entry_id%3D31%26band_rank%3D20%26pos%3D20%26display_time%3D1761633343%26pre_seqid%3D17616333438780122700088" target="_blank" class="news-link">保时捷回应多款油车将停产</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="news-item new">
+                        <div class="news-number">3</div>
+                        <div class="news-content">
+                            <div class="news-header">
+                                <span class="source-name">今日头条</span><span class="rank-num high">24</span><span class="time-info">14时54分</span>
+                            </div>
+                            <div class="news-title"><a href="https://www.toutiao.com/trending/7565857147918139442/" target="_blank" class="news-link">越野车开到海滩被困 海水冲进车内</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <div class="footer-content">
+                    由 <span class="project-name">TrendRadar</span> 生成 · 
+                    <a href="https://github.com/sansan0/TrendRadar" target="_blank" class="footer-link">
+                        GitHub 开源项目
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <script>
+            async function saveAsImage() {
+                const button = event.target;
+                const originalText = button.textContent;
+                
+                try {
+                    button.textContent = '生成中...';
+                    button.disabled = true;
+                    window.scrollTo(0, 0);
+                    
+                    // 等待页面稳定
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    
+                    // 截图前隐藏按钮
+                    const buttons = document.querySelector('.save-buttons');
+                    buttons.style.visibility = 'hidden';
+                    
+                    // 再次等待确保按钮完全隐藏
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                    const container = document.querySelector('.container');
+                    
+                    const canvas = await html2canvas(container, {
+                        backgroundColor: '#ffffff',
+                        scale: 1.5,
+                        useCORS: true,
+                        allowTaint: false,
+                        imageTimeout: 10000,
+                        removeContainer: false,
+                        foreignObjectRendering: false,
+                        logging: false,
+                        width: container.offsetWidth,
+                        height: container.offsetHeight,
+                        x: 0,
+                        y: 0,
+                        scrollX: 0,
+                        scrollY: 0,
+                        windowWidth: window.innerWidth,
+                        windowHeight: window.innerHeight
+                    });
+                    
+                    buttons.style.visibility = 'visible';
+                    
+                    const link = document.createElement('a');
+                    const now = new Date();
+                    const filename = `TrendRadar_热点新闻分析_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}.png`;
+                    
+                    link.download = filename;
+                    link.href = canvas.toDataURL('image/png', 1.0);
+                    
+                    // 触发下载
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    button.textContent = '保存成功!';
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.disabled = false;
+                    }, 2000);
+                    
+                } catch (error) {
+                    const buttons = document.querySelector('.save-buttons');
+                    buttons.style.visibility = 'visible';
+                    button.textContent = '保存失败';
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.disabled = false;
+                    }, 2000);
+                }
+            }
+            
+            async function saveAsMultipleImages() {
+                const button = event.target;
+                const originalText = button.textContent;
+                const container = document.querySelector('.container');
+                const scale = 1.5; 
+                const maxHeight = 5000 / scale;
+                
+                try {
+                    button.textContent = '分析中...';
+                    button.disabled = true;
+                    
+                    // 获取所有可能的分割元素
+                    const newsItems = Array.from(container.querySelectorAll('.news-item'));
+                    const wordGroups = Array.from(container.querySelectorAll('.word-group'));
+                    const newSection = container.querySelector('.new-section');
+                    const errorSection = container.querySelector('.error-section');
+                    const header = container.querySelector('.header');
+                    const footer = container.querySelector('.footer');
+                    
+                    // 计算元素位置和高度
+                    const containerRect = container.getBoundingClientRect();
+                    const elements = [];
+                    
+                    // 添加header作为必须包含的元素
+                    elements.push({
+                        type: 'header',
+                        element: header,
+                        top: 0,
+                        bottom: header.offsetHeight,
+                        height: header.offsetHeight
+                    });
+                    
+                    // 添加错误信息（如果存在）
+                    if (errorSection) {
+                        const rect = errorSection.getBoundingClientRect();
+                        elements.push({
+                            type: 'error',
+                            element: errorSection,
+                            top: rect.top - containerRect.top,
+                            bottom: rect.bottom - containerRect.top,
+                            height: rect.height
+                        });
+                    }
+                    
+                    // 按word-group分组处理news-item
+                    wordGroups.forEach(group => {
+                        const groupRect = group.getBoundingClientRect();
+                        const groupNewsItems = group.querySelectorAll('.news-item');
+                        
+                        // 添加word-group的header部分
+                        const wordHeader = group.querySelector('.word-header');
+                        if (wordHeader) {
+                            const headerRect = wordHeader.getBoundingClientRect();
+                            elements.push({
+                                type: 'word-header',
+                                element: wordHeader,
+                                parent: group,
+                                top: groupRect.top - containerRect.top,
+                                bottom: headerRect.bottom - containerRect.top,
+                                height: headerRect.height
+                            });
+                        }
+                        
+                        // 添加每个news-item
+                        groupNewsItems.forEach(item => {
+                            const rect = item.getBoundingClientRect();
+                            elements.push({
+                                type: 'news-item',
+                                element: item,
+                                parent: group,
+                                top: rect.top - containerRect.top,
+                                bottom: rect.bottom - containerRect.top,
+                                height: rect.height
+                            });
+                        });
+                    });
+                    
+                    // 添加新增新闻部分
+                    if (newSection) {
+                        const rect = newSection.getBoundingClientRect();
+                        elements.push({
+                            type: 'new-section',
+                            element: newSection,
+                            top: rect.top - containerRect.top,
+                            bottom: rect.bottom - containerRect.top,
+                            height: rect.height
+                        });
+                    }
+                    
+                    // 添加footer
+                    const footerRect = footer.getBoundingClientRect();
+                    elements.push({
+                        type: 'footer',
+                        element: footer,
+                        top: footerRect.top - containerRect.top,
+                        bottom: footerRect.bottom - containerRect.top,
+                        height: footer.offsetHeight
+                    });
+                    
+                    // 计算分割点
+                    const segments = [];
+                    let currentSegment = { start: 0, end: 0, height: 0, includeHeader: true };
+                    let headerHeight = header.offsetHeight;
+                    currentSegment.height = headerHeight;
+                    
+                    for (let i = 1; i < elements.length; i++) {
+                        const element = elements[i];
+                        const potentialHeight = element.bottom - currentSegment.start;
+                        
+                        // 检查是否需要创建新分段
+                        if (potentialHeight > maxHeight && currentSegment.height > headerHeight) {
+                            // 在前一个元素结束处分割
+                            currentSegment.end = elements[i - 1].bottom;
+                            segments.push(currentSegment);
+                            
+                            // 开始新分段
+                            currentSegment = {
+                                start: currentSegment.end,
+                                end: 0,
+                                height: element.bottom - currentSegment.end,
+                                includeHeader: false
+                            };
+                        } else {
+                            currentSegment.height = potentialHeight;
+                            currentSegment.end = element.bottom;
+                        }
+                    }
+                    
+                    // 添加最后一个分段
+                    if (currentSegment.height > 0) {
+                        currentSegment.end = container.offsetHeight;
+                        segments.push(currentSegment);
+                    }
+                    
+                    button.textContent = `生成中 (0/${segments.length})...`;
+                    
+                    // 隐藏保存按钮
+                    const buttons = document.querySelector('.save-buttons');
+                    buttons.style.visibility = 'hidden';
+                    
+                    // 为每个分段生成图片
+                    const images = [];
+                    for (let i = 0; i < segments.length; i++) {
+                        const segment = segments[i];
+                        button.textContent = `生成中 (${i + 1}/${segments.length})...`;
+                        
+                        // 创建临时容器用于截图
+                        const tempContainer = document.createElement('div');
+                        tempContainer.style.cssText = `
+                            position: absolute;
+                            left: -9999px;
+                            top: 0;
+                            width: ${container.offsetWidth}px;
+                            background: white;
+                        `;
+                        tempContainer.className = 'container';
+                        
+                        // 克隆容器内容
+                        const clonedContainer = container.cloneNode(true);
+                        
+                        // 移除克隆内容中的保存按钮
+                        const clonedButtons = clonedContainer.querySelector('.save-buttons');
+                        if (clonedButtons) {
+                            clonedButtons.style.display = 'none';
+                        }
+                        
+                        tempContainer.appendChild(clonedContainer);
+                        document.body.appendChild(tempContainer);
+                        
+                        // 等待DOM更新
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        
+                        // 使用html2canvas截取特定区域
+                        const canvas = await html2canvas(clonedContainer, {
+                            backgroundColor: '#ffffff',
+                            scale: scale,
+                            useCORS: true,
+                            allowTaint: false,
+                            imageTimeout: 10000,
+                            logging: false,
+                            width: container.offsetWidth,
+                            height: segment.end - segment.start,
+                            x: 0,
+                            y: segment.start,
+                            windowWidth: window.innerWidth,
+                            windowHeight: window.innerHeight
+                        });
+                        
+                        images.push(canvas.toDataURL('image/png', 1.0));
+                        
+                        // 清理临时容器
+                        document.body.removeChild(tempContainer);
+                    }
+                    
+                    // 恢复按钮显示
+                    buttons.style.visibility = 'visible';
+                    
+                    // 下载所有图片
+                    const now = new Date();
+                    const baseFilename = `TrendRadar_热点新闻分析_${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+                    
+                    for (let i = 0; i < images.length; i++) {
+                        const link = document.createElement('a');
+                        link.download = `${baseFilename}_part${i + 1}.png`;
+                        link.href = images[i];
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        
+                        // 延迟一下避免浏览器阻止多个下载
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+                    
+                    button.textContent = `已保存 ${segments.length} 张图片!`;
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.disabled = false;
+                    }, 2000);
+                    
+                } catch (error) {
+                    console.error('分段保存失败:', error);
+                    const buttons = document.querySelector('.save-buttons');
+                    buttons.style.visibility = 'visible';
+                    button.textContent = '保存失败';
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.disabled = false;
+                    }, 2000);
+                }
+            }
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                window.scrollTo(0, 0);
+            });
+        </script>
+    </body>
+    </html>
+    
