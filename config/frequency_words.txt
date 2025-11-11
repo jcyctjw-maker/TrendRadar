@@ -810,42 +810,6 @@ ID.4
 
 ID.6
 
-3系
-
-5系
-
-7系
-
-X1
-
-X3
-
-X5
-
-X7
-
-i3
-
-i4
-
-iX3
-
-iX
-
-Z4
-
-M3
-
-M5
-
-A级
-
-C级
-
-E级
-
-S级
-
 GLA
 
 GLC
@@ -854,41 +818,17 @@ GLE
 
 GLS
 
-G级
-
 EQC
 
 EQE
 
 EQS
 
-V级
-
-A3
-
-A4
-
-A6
-
-A8
-
-Q2
-
-Q3
-
-Q5
-
-Q7
-
-Q8
-
 e-tron
 
 RS6
 
 RS7
-
-R8
 
 福克斯
 
