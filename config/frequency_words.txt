@@ -54,8 +54,6 @@ range-extended electric vehicle
 
 NEV
 
-EV
-
 BEV
 
 PHEV
